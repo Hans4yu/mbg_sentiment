@@ -9,18 +9,24 @@ from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import pandas as pd
 
-# Download NLTK resources (aman untuk Streamlit)
+# Download NLTK resources dengan error handling yang lebih baik
 @st.cache_resource
 def download_nltk_data():
-    try:
-        nltk.data.find('tokenizers/punkt')
-    except LookupError:
-        nltk.download('punkt', quiet=True)
+    nltk_data = ['punkt_tab', 'stopwords']
+    for resource in nltk_data:
+        try:
+            nltk.data.find(f'tokenizers/{resource}')
+        except LookupError:
+            try:
+                nltk.download(resource, quiet=True)
+            except:
+                pass
     
+    # Ensure punkt_tab exists for Indonesian
     try:
-        nltk.data.find('corpora/stopwords')
+        nltk.data.find('tokenizers/punkt_tab/english')
     except LookupError:
-        nltk.download('stopwords', quiet=True)
+        nltk.download('punkt_tab', quiet=True)
 
 download_nltk_data()
 
@@ -77,11 +83,21 @@ def fix_slangwords(text):
     return " ".join(fixed)
 
 def tokenizingText(text):
-    return word_tokenize(text)
+    try:
+        return word_tokenize(text)
+    except LookupError:
+        # Fallback simple tokenization jika NLTK data tidak tersedia
+        return text.split()
 
 def filteringText(tokens):
-    stop_id = set(stopwords.words('indonesian'))
-    stop_en = set(stopwords.words('english'))
+    try:
+        stop_id = set(stopwords.words('indonesian'))
+        stop_en = set(stopwords.words('english'))
+    except LookupError:
+        # Fallback: gunakan stopwords sederhana jika NLTK data tidak tersedia
+        stop_id = {"dan", "atau", "yang", "di", "ke", "dari", "untuk"}
+        stop_en = {"and", "or", "the", "a", "to", "from", "for"}
+    
     stop_all = stop_id.union(stop_en)
 
     exceptions = {
