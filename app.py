@@ -3,14 +3,26 @@ import joblib
 import re
 import requests
 import nltk
+import os
 
 from nltk.tokenize import word_tokenize
 from nltk.corpus import stopwords
 import pandas as pd
 
 # Download NLTK resources (aman untuk Streamlit)
-nltk.download('punkt')
-nltk.download('stopwords')
+@st.cache_resource
+def download_nltk_data():
+    try:
+        nltk.data.find('tokenizers/punkt')
+    except LookupError:
+        nltk.download('punkt', quiet=True)
+    
+    try:
+        nltk.data.find('corpora/stopwords')
+    except LookupError:
+        nltk.download('stopwords', quiet=True)
+
+download_nltk_data()
 
 # =============================
 # Load model & vectorizer
